@@ -1,0 +1,121 @@
+/* Heatwave Intelligence — the look of the whole dashboard.
+   One theme: deep navy, with teal, coral and purple as the three accent colours. */
+
+:root {
+  --panel: #20243f;                 /* panels and charts */
+  --ink: #ffffff;                   /* main text */
+  --soft: #b9bcd6;                  /* secondary text */
+  --line: rgba(255, 255, 255, 0.28);
+  --teal: #5eb6d1;
+  --coral: #ee6f87;
+  --purple: #a47df2;
+}
+
+/* ---------- page ---------- */
+[data-testid="stAppViewContainer"] {
+  background: linear-gradient(180deg, #232744 0%, #282c49 55%, #4b4c63 100%) fixed;
+}
+[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 2.6rem; padding-bottom: 4rem; max-width: 1400px; }
+
+/* ---------- the big intro block on the overview ---------- */
+.intro { padding: 18px 8px 0 14px; animation: rise .5s ease both; }
+.intro-year { white-space: nowrap; font-size: 4.7rem; font-weight: 600; line-height: 1; letter-spacing: .01em; color: var(--ink); }
+.intro-sub { font-size: 1.6rem; font-weight: 300; letter-spacing: .06em; color: var(--ink); margin-top: 4px; }
+.pill {
+  display: inline-block; margin: 30px 0 34px; padding: 11px 20px 7px;
+  background: linear-gradient(180deg, #ffffff 55%, #c9cbdc 100%); color: #232744;
+  font-size: 1.25rem; font-weight: 600; letter-spacing: .04em;
+}
+
+/* ---------- coloured numbers with a thin underline ---------- */
+.stats { display: flex; flex-wrap: wrap; gap: 14px 26px; margin-bottom: 8px; }
+.stat-value { font-size: 1.4rem; white-space: nowrap; letter-spacing: .03em; padding: 0 2px 2px; border-bottom: 1px solid currentColor; display: inline-block; }
+.stat-label { font-size: .78rem; color: var(--ink); margin-top: 7px; letter-spacing: .02em; }
+.stat-note { font-size: .72rem; color: var(--soft); }
+
+/* ---------- page heading (every page except the overview) ---------- */
+.page-head { padding: 6px 4px 6px 14px; margin-bottom: 14px; animation: rise .5s ease both; }
+.eyebrow { font-size: .82rem; letter-spacing: .2em; text-transform: uppercase; color: var(--coral); }
+.page-title { font-size: 3rem; font-weight: 400; line-height: 1.15; letter-spacing: .01em; color: var(--ink); margin: 6px 0 8px; }
+.page-text { font-size: 1.08rem; font-weight: 300; line-height: 1.55; color: var(--soft); max-width: 780px; margin-bottom: 22px; }
+
+/* ---------- section headings: a title with a line under it ---------- */
+.section { margin: 30px 0 16px 14px; animation: rise .5s ease both; }
+.section-title { display: inline-block; min-width: 330px; font-size: 1.55rem; letter-spacing: .04em; color: var(--ink);
+                 padding: 0 60px 9px 0; border-bottom: 1px solid var(--line); }
+
+/* ---------- panels ---------- */
+[class*="st-key-card-"] {
+  background: var(--panel); border: none !important; border-radius: 4px;
+  padding: 1.5rem 1.6rem 1.5rem; box-shadow: 0 10px 30px rgba(10, 12, 30, 0.25);
+  animation: rise .5s ease both;
+}
+.card-title { display: inline-block; min-width: 62%; font-size: 1.45rem; letter-spacing: .04em; color: var(--ink);
+              padding: 0 30px 8px 0; border-bottom: 1px solid var(--line); }
+.card-note { color: var(--soft); font-size: .9rem; font-weight: 300; margin-top: 10px; }
+.reading { color: var(--soft); font-size: .95rem; font-weight: 300; line-height: 1.55;
+           border-left: 2px solid var(--coral); padding-left: 12px; margin-top: 4px; }
+.reading b { color: var(--ink); font-weight: 400; }
+[class*="st-key-card-"] pre { max-height: 440px; overflow: auto; }
+
+/* card header: title on the left, Code switch on the right, never wrapping */
+[class*="st-key-head-"], [class*="st-key-head-"] [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; }
+[class*="st-key-head-"] [data-testid="stElementContainer"]:first-child { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
+
+/* ---------- one big word and a sentence ---------- */
+.big-word { white-space: nowrap; font-size: 2.9rem; line-height: 1.1; letter-spacing: .03em; color: var(--teal); margin-top: 6px; }
+.big-text { font-size: 1.12rem; font-weight: 300; line-height: 1.5; color: var(--ink); margin: 6px 0 22px; }
+
+/* ---------- gradient bars ---------- */
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bar-track { flex: 1; }
+.bar { height: 31px; line-height: 34px; padding-left: 14px; font-size: 1.12rem; letter-spacing: .03em; white-space: nowrap;
+       color: var(--ink); background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), var(--c)); min-width: 6px; }
+.bar-value { width: 52px; text-align: right; font-size: 1.12rem; letter-spacing: .04em; color: var(--ink); }
+
+/* ---------- ranking: three big names, then a small list ---------- */
+.rank-big { display: flex; align-items: baseline; gap: 16px; margin-bottom: 2px; }
+.rank-name { font-size: 2.05rem; font-weight: 600; line-height: 1.2; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.rank-value { flex: 1; text-align: right; white-space: nowrap; font-size: 1.02rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+.rank-small { display: flex; align-items: baseline; gap: 16px; font-size: 1.08rem; letter-spacing: .03em; color: var(--ink); margin-top: 5px; }
+.rank-small span:last-child { flex: 1; text-align: right; font-size: .92rem; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+
+/* ---------- numbered insight tiles ---------- */
+.insights { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+@media (max-width: 1100px) { .insights { grid-template-columns: repeat(2, 1fr); } }
+.insight { background: var(--panel); border-radius: 4px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(10, 12, 30, 0.25); animation: rise .5s ease both; }
+.insight-number { font-size: 1.5rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; display: inline-block; padding-bottom: 1px; }
+.insight-title { font-size: 1.12rem; letter-spacing: .02em; color: var(--ink); margin: 10px 0 5px; }
+.insight-text { font-size: .93rem; font-weight: 300; line-height: 1.5; color: var(--soft); }
+
+/* ---------- animations ---------- */
+[class*="st-key-card-"][class*="--flip"] { animation: flip .6s cubic-bezier(.2, .8, .25, 1) both; }   /* Code switch on */
+@keyframes flip {
+  from { transform: perspective(1800px) rotateY(-90deg); opacity: .1; }
+  to   { transform: perspective(1800px) rotateY(0deg);   opacity: 1; }
+}
+@keyframes rise {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro, .page-head, .section, .insight, [class*="st-key-card-"] { animation: none !important; }
+}
+
+/* ---------- sidebar ---------- */
+[data-testid="stSidebar"] { background: #1c2039; border-right: 1px solid rgba(255, 255, 255, 0.06); }
+.brand-name { font-size: 1.45rem; font-weight: 600; line-height: 1.15; letter-spacing: .03em; color: var(--ink); }
+.brand-sub { font-size: .85rem; font-weight: 300; letter-spacing: .05em; color: var(--soft); margin-top: 3px; }
+.side-label { font-size: .74rem; letter-spacing: .2em; text-transform: uppercase; color: var(--soft);
+              margin: 1.3rem 0 .3rem; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+
+/* the navigation radio buttons, restyled as a list */
+[data-testid="stSidebar"] [role="radiogroup"] { gap: 2px; }
+[data-testid="stSidebar"] [role="radiogroup"] > div,
+[data-testid="stSidebar"] [role="radiogroup"] label > div { width: 100% !important; }
+[data-testid="stSidebar"] [role="radiogroup"] label { width: 100%; padding: 8px 12px 6px; cursor: pointer; transition: background .15s ease; }
+[data-testid="stSidebar"] [role="radiogroup"] label > div > div:first-child:not([data-testid]) { display: none; }
+[data-testid="stSidebar"] [role="radiogroup"] label p { font-size: 1.02rem; letter-spacing: .03em; }
+[data-testid="stSidebar"] [role="radiogroup"] label:hover { background: rgba(255, 255, 255, 0.05); }
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) { background: linear-gradient(90deg, var(--purple), rgba(164, 125, 242, 0.08)); }

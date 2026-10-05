@@ -1,0 +1,13 @@
+[theme]
+base = "dark"
+primaryColor = "#a47df2"
+backgroundColor = "#262a47"
+secondaryBackgroundColor = "#323759"
+textColor = "#ffffff"
+font = "Josefin Sans:https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600;700&display=swap"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

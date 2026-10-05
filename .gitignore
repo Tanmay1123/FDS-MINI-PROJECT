@@ -1,0 +1,18 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Streamlit secrets (never commit)
+.streamlit/secrets.toml
+
+# macOS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Lab write-ups: they carry your name and roll number, and the app does not need them.
+# Delete these two lines if you want them in the repository.
+files/*.pdf
+files/*.docx
