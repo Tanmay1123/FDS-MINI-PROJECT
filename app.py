@@ -138,15 +138,16 @@ def chart_card(title, plot, *args, note="", read="", maths=None, **kwargs):
             st.toggle("Code", key="code-" + name)
 
         if show_code:
-            st.caption("charts.py — the Matplotlib code that draws this chart")
+            st.caption("The code that draws this chart")
             st.code(inspect.getsource(plot), language="python")
             if maths:
                 st.caption("analysis.py — the formula behind it")
                 st.code(inspect.getsource(maths), language="python")
         else:
             figure = plot(*args, **kwargs)
-            st.pyplot(figure)
-            plt.close(figure)
+            if figure is not None:          # a Matplotlib figure; live charts draw themselves
+                st.pyplot(figure)
+                plt.close(figure)
             if read:
                 reading(read)
 
@@ -179,6 +180,33 @@ def to_excel(df):
         df.to_excel(writer, sheet_name="Data", index=False)
         an.summary_table(df).round(3).to_excel(writer, sheet_name="Summary statistics", index=False)
     return buffer.getvalue()
+
+
+# Live charts for the overview. These use the charts built into Streamlit (st.area_chart and
+# st.bar_chart), so you can hover to read values, drag to move and scroll to zoom.
+
+def live_hot_days(df):
+    """Stacked area chart: Warm, Hot and Severe days in every month."""
+    hot = df[df["Heat_Severity_Class"] != "Normal"]
+    month_start = hot["Date"].dt.to_period("M").dt.to_timestamp()
+    monthly = pd.crosstab(month_start, hot["Heat_Severity_Class"])        # rows = months, columns = classes
+    monthly = monthly.reindex(columns=["Warm", "Hot", "Severe"], fill_value=0)
+    st.area_chart(monthly, color=[TEAL, CORAL, PURPLE], stack=True, height=340,
+                  x_label="Month", y_label="City-days per month")
+
+
+def live_days_by_year(by_year):
+    """Bar chart: heatwave days in each year."""
+    table = pd.DataFrame({"Year": by_year.index.astype(str), "Heatwave days": by_year.to_numpy()})
+    st.bar_chart(table, x="Year", y="Heatwave days", color=TEAL, height=340)
+
+
+def live_region_share(df):
+    """Stacked horizontal bars: share of each region's days that were Warm, Hot or Severe."""
+    share = pd.crosstab(df["Region"], df["Heat_Severity_Class"], normalize="index") * 100
+    share = share.reindex(columns=["Warm", "Hot", "Severe"], fill_value=0).round(1)
+    st.bar_chart(share, color=[TEAL, CORAL, PURPLE], horizontal=True, stack=True, height=340,
+                 x_label="", y_label="Share of days at 35 °C or above (%)")   # the labels swap when horizontal
 
 
 # ================================================================ 3. SIDEBAR
@@ -252,8 +280,8 @@ if page == "Overview":
                  ("Hottest reading", f"{hottest['Max_Temperature_C']:.1f} °C", hottest["Location_Name"]),
              ]) + '</div>')
     with right:
-        chart_card("Hot Days Per Month", ch.severity_area, df,
-                   note="City-days at 35 °C or above. Warm = 35–40 °C, Hot = 40–45 °C, Severe = above 45 °C.")
+        chart_card("Hot Days Per Month", live_hot_days, df,
+                   note="City-days at 35 °C or above. Hover over the chart to read any month.")
 
     # second row: three panels
     one, two, three = st.columns(3)
@@ -286,10 +314,10 @@ if page == "Overview":
     section("Year by Year, Region by Region")
     left, right = st.columns(2)
     with left:
-        chart_card("Heatwave Days by Year", ch.columns, by_year, "Heatwave days")
+        chart_card("Heatwave Days by Year", live_days_by_year, by_year, note="Hover over a bar to read its value.")
     with right:
-        chart_card("How Often Each Region Gets Hot", ch.severity_stack, df,
-                   note="Share of each region's days at 35 °C or above.")
+        chart_card("How Often Each Region Gets Hot", live_region_share, df,
+                   note="Warm = 35–40 °C, Hot = 40–45 °C, Severe = above 45 °C.")
 
 
 # ================================================================ 5. EXPERIMENTS 1 & 2

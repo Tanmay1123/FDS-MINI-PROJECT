@@ -854,6 +854,24 @@ if years:
     df = df[df["Year"].isin(years)]
 ```
 
+### Live charts on the Overview
+
+Three charts on the Overview are not Matplotlib pictures. They use the charts **built into
+Streamlit**, so no extra library is needed, and they respond to the mouse: hover to read a value,
+drag to move, scroll to zoom, double-click to reset.
+
+| Chart | Command | Function in `app.py` |
+|---|---|---|
+| Hot Days Per Month | `st.area_chart(table, stack=True)` | `live_hot_days` |
+| Heatwave Days by Year | `st.bar_chart(table, x=..., y=...)` | `live_days_by_year` |
+| How Often Each Region Gets Hot | `st.bar_chart(table, horizontal=True, stack=True)` | `live_region_share` |
+
+Each function prepares a small table with Pandas and hands it to Streamlit. For example,
+`pd.crosstab(month, severity_class)` counts the days for every month and class, giving one row
+per month and one column per class, which is exactly the shape `st.area_chart` expects.
+
+Every other chart on the site is a Matplotlib figure, as Experiment 7 requires.
+
 ### The Code switch (card flip)
 
 Each chart card has a `st.toggle("Code")`. When it is on, the card shows the source code of the

@@ -46,6 +46,7 @@ The Year / Region / Season filters in the sidebar apply to every section.
 
 ## Controls
 
+- **Live charts** (Overview): three charts use Streamlit's built-in charts, so you can hover to read values and scroll to zoom.
 - **Code** (top right of every chart card): flips the card over to show the Matplotlib code that draws
   the chart, and the formula from `analysis.py` where there is one.
 - **Download data** (bottom of the sidebar): the currently filtered records as CSV or Excel.
