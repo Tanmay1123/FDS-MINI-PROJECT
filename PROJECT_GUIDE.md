@@ -1,25 +1,46 @@
 # Heatwave Intelligence Dashboard — Complete Project Guide
 
-This guide explains everything in the project: what each section of the dashboard does, the
-maths behind it, and the Python (Pandas, NumPy, Matplotlib, Streamlit) commands that produce it.
-Formulas are written in LaTeX; open this file in the VS Code Markdown preview (`Cmd+Shift+V`) or on
-GitHub to see them rendered.
+This guide explains the whole project from the ground up: the Python you need to read the code,
+what each section of the dashboard does, the maths behind it, and every Pandas, NumPy, Matplotlib
+and Streamlit command that is used. Formulas are written in LaTeX; open this file in the VS Code
+Markdown preview (`Cmd+Shift+V`) or on GitHub to see them rendered.
+
+**How to use it.** Read sections 1 to 3 first; they are short and everything else builds on them.
+Then read one experiment section (5 to 12) at a time with that page of the dashboard open beside
+you. Sections 13 and 14 explain the code file by file. Sections 17 and 18 are for the presentation.
 
 **Contents**
 
+*Part A — Foundations*
+
 1. [The project in one page](#1-the-project-in-one-page)
-2. [The dataset](#2-the-dataset)
-3. [Experiment 1 — Attribute types](#3-experiment-1--attribute-types)
-4. [Experiment 2 — Pandas and NumPy data handling](#4-experiment-2--pandas-and-numpy-data-handling)
-5. [Experiment 3 — Central tendency and variability](#5-experiment-3--central-tendency-and-variability)
-6. [Experiment 4 — Correlation coefficient](#6-experiment-4--correlation-coefficient)
-7. [Experiment 5 — Predicting missing values with regression](#7-experiment-5--predicting-missing-values-with-regression)
-8. [Experiment 6 — Normalization and K-means discretization](#8-experiment-6--normalization-and-k-means-discretization)
-9. [Experiment 7 — The six Matplotlib plots](#9-experiment-7--the-six-matplotlib-plots)
-10. [Experiment 8 — Visualization techniques](#10-experiment-8--visualization-techniques)
-11. [How the dashboard itself works (Streamlit)](#11-how-the-dashboard-itself-works-streamlit)
-12. [Command cheat sheets](#12-command-cheat-sheets)
-13. [Likely viva questions](#13-likely-viva-questions)
+2. [The Python you need to read the code](#2-the-python-you-need-to-read-the-code)
+3. [How the data flows through the project](#3-how-the-data-flows-through-the-project)
+4. [The dataset](#4-the-dataset)
+
+*Part B — The eight experiments*
+
+5. [Experiment 1 — Attribute types](#5-experiment-1--attribute-types)
+6. [Experiment 2 — Pandas and NumPy data handling](#6-experiment-2--pandas-and-numpy-data-handling)
+7. [Experiment 3 — Central tendency and variability](#7-experiment-3--central-tendency-and-variability)
+8. [Experiment 4 — Correlation coefficient](#8-experiment-4--correlation-coefficient)
+9. [Experiment 5 — Predicting missing values with regression](#9-experiment-5--predicting-missing-values-with-regression)
+10. [Experiment 6 — Normalization and K-means discretization](#10-experiment-6--normalization-and-k-means-discretization)
+11. [Experiment 7 — The six Matplotlib plots](#11-experiment-7--the-six-matplotlib-plots)
+12. [Experiment 8 — Visualization techniques](#12-experiment-8--visualization-techniques)
+
+*Part C — The code*
+
+13. [How the dashboard itself works (Streamlit)](#13-how-the-dashboard-itself-works-streamlit)
+14. [File-by-file walkthrough](#14-file-by-file-walkthrough)
+15. [Python, Weka and RapidMiner](#15-python-weka-and-rapidminer)
+
+*Part D — Revision and presenting*
+
+16. [Command cheat sheets](#16-command-cheat-sheets)
+17. [Presenting it: a five-minute demo](#17-presenting-it-a-five-minute-demo)
+18. [Likely viva questions](#18-likely-viva-questions)
+19. [Glossary](#19-glossary)
 
 ---
 
@@ -28,14 +49,22 @@ GitHub to see them rendered.
 **Goal.** Take a weather dataset and use the FDS lab techniques to answer: *where, when and under
 what conditions do heatwaves happen?*
 
-**Three files do all the work.**
+**What it is.** A web dashboard with eight pages: an Overview, then one page for each lab
+experiment (Experiments 1 and 2 share a page). It runs in the browser but is written entirely in
+Python.
+
+**The files.**
 
 | File | Role | Libraries |
 |---|---|---|
 | `analysis.py` | Every statistic, written out from its formula | NumPy, Pandas, `math` |
-| `charts.py` | Every figure | Matplotlib (plus SciPy for the dendrogram) |
+| `charts.py` | Every Matplotlib figure | Matplotlib (plus SciPy for the dendrogram) |
 | `app.py` | The web page: puts the charts and tables on screen, top to bottom | Streamlit |
 | `style.css` | How the page looks: colours, panels, spacing, the flip animation | CSS |
+| `fonts/` | The Josefin Sans font file the charts use | – |
+| `files/heatwave_dataset_us.csv` | The dataset | – |
+| `.streamlit/config.toml` | Streamlit's theme colours and font | – |
+| `requirements.txt` | The libraries to install, with their versions | – |
 
 **Why the statistics are hand-written.** The lab write-ups say "without using ready-made
 functions". So `analysis.py` never calls `np.mean`, `np.std`, `np.corrcoef` or scikit-learn. It
@@ -65,7 +94,194 @@ python analysis.py          # the same results printed in the terminal
 
 ---
 
-## 2. The dataset
+## 2. The Python you need to read the code
+
+Everything in the project is built from the handful of ideas below. If you can read these, you
+can read all three Python files.
+
+### Variables, numbers and text
+
+```python
+k = 4                              # a whole number (int)
+threshold = 40.0                   # a decimal number (float)
+region = "Southwest Desert"        # text (str)
+is_hot = threshold >= 40           # True or False (bool)
+```
+
+**f-strings** put values inside text. The part after `:` is the format:
+
+```python
+f"{len(df):,} records"             # 102,256 records     (, = thousands separator)
+f"{21.6661:.2f} °C"                # 21.67 °C            (.2f = two decimals)
+f"{0.6638:+.2f}"                   # +0.66               (+ = always show the sign)
+f"{7:02d}"                         # 07                  (pad to two digits)
+```
+
+### Lists, tuples and dictionaries
+
+```python
+months = ["Jan", "Feb", "Mar"]     # list: ordered, uses [ ]
+months[0]                          # "Jan"   (counting starts at 0)
+months[-1]                         # "Mar"   (negative = from the end)
+months[0:2]                        # ["Jan", "Feb"]   (a slice: start included, stop excluded)
+values[::-1]                       # the whole list reversed
+values[::30]                       # every 30th item
+
+point = (33.45, -112.07)           # tuple: like a list but cannot be changed
+lat, lon = point                   # "unpacking": two names in one line
+
+labels = {"Wind_Speed_mps": "Wind speed (m/s)"}     # dictionary: key -> value
+labels["Wind_Speed_mps"]           # "Wind speed (m/s)"
+labels.get("unknown", "n/a")       # "n/a"   (.get gives a default instead of an error)
+```
+
+`analysis.py` uses dictionaries for the readable column names (`LABELS`, `SHORT`) and to return
+several results at once (`imputation_experiment` returns a dictionary).
+
+### Conditions and loops
+
+```python
+if n % 2 == 0:                     # % is the remainder, so this means "n is even"
+    middle = (x[n // 2 - 1] + x[n // 2]) / 2     # // is division rounded down
+else:
+    middle = x[n // 2]
+
+for c in range(k):                 # c = 0, 1, ..., k-1
+    ...
+for i, name in enumerate(names):   # i = position, name = item
+    ...
+for label, value in table.items(): # walk through a dictionary or a Pandas Series
+    ...
+```
+
+A **list comprehension** builds a list in one line:
+
+```python
+[f"Bin {c + 1}" for c in labels]                 # ["Bin 1", "Bin 3", ...]
+[r for r in REGIONS if r in present]             # keep only some items
+```
+
+### Functions
+
+```python
+def mean(values):                  # def name(inputs):
+    x = np.asarray(values, dtype=float)
+    return x.sum() / len(x)        # return hands the answer back
+```
+
+- **Default values:** `def kmeans(points, k, max_iter=100, seed=42)` means `max_iter` and `seed`
+  can be left out when calling it.
+- **Keyword arguments:** `ax.hist(values, bins=40, color=TEAL)` names the inputs, so the order
+  does not matter.
+- **Several results:** `return labels, centroids, wcss, iteration` returns four things, received
+  with `labels, centroids, wcss, iterations = kmeans(...)`.
+- **`*args` and `**kwargs`:** "any extra inputs". `chart_card(title, plot, *args, **kwargs)`
+  accepts whatever follows `plot` and passes it straight on with `plot(*args, **kwargs)`.
+- **A function can be passed like a value.** `chart_card("...", ch.columns, by_year, "Heatwave days")`
+  hands over the function `ch.columns` itself (no brackets), and `chart_card` calls it later.
+- **`lambda`** is a one-line function with no name: `lambda: export.to_csv(index=False)`.
+
+### Imports
+
+```python
+import numpy as np                 # use the library under a short name: np.sort(...)
+import analysis as an              # our own file analysis.py: an.mean(...)
+import charts as ch                # our own file charts.py:   ch.histogram(...)
+from pathlib import Path           # take one thing out of a library
+```
+
+### `with` blocks
+
+`with` means "do the indented lines inside this thing":
+
+```python
+with st.sidebar:                   # everything indented goes in the sidebar
+    st.caption("...")
+with card("Frequency table"):      # everything indented goes inside this panel
+    st.dataframe(table)
+with pd.ExcelWriter(buffer) as writer:   # open the Excel file, write, close it automatically
+    df.to_excel(writer)
+```
+
+### Decorators
+
+A line starting with `@` above a function changes how the function behaves:
+
+```python
+@st.cache_data                     # remember the result; do not recompute next time
+def load_data():
+    return an.load_data()
+
+@st.fragment                       # when a widget inside changes, re-run only this function
+def chart_card(...):
+    ...
+```
+
+### The Pandas ideas that matter most
+
+- A **DataFrame** (`df`) is the table. A **Series** is one column, or any labelled list of values
+  such as the result of a `groupby`.
+- `df["Max_Temperature_C"] > 40` gives a column of True/False (a **mask**). `df[mask]` keeps the
+  True rows.
+- `.to_numpy()` turns a column into a plain NumPy array for arithmetic.
+- **Method chaining** reads left to right:
+  `heatwaves.groupby("Location_Name").size().sort_values(ascending=False).head(10)` means
+  "group by city, count rows, sort largest first, keep the top ten".
+
+---
+
+## 3. How the data flows through the project
+
+```text
+files/heatwave_dataset_us.csv
+        │   pd.read_csv                                   (analysis.load_data)
+        ▼
+   data   ── the full table, 102,256 rows
+        │   sidebar filters: Year / Region / Season       (app.py, block 3)
+        ▼
+    df    ── the rows currently selected
+        │
+        ├──► analysis.py   numbers and small tables   (mean, r, regression, K-means, ...)
+        │         │
+        │         ▼
+        ├──► charts.py     Matplotlib figures         (each function returns one figure)
+        │         │
+        ▼         ▼
+      app.py   puts numbers, tables and figures on the page   (st.dataframe, st.pyplot, ...)
+        │
+        ▼
+   the browser, styled by style.css
+```
+
+**What happens when you click something.**
+
+1. You change a widget, for example pick "2023" in the Year filter.
+2. Streamlit re-runs `app.py` from the first line to the last.
+3. `load_data()` is cached, so the CSV is not read again.
+4. `df` is rebuilt with only the 2023 rows.
+5. The block for the current page runs: it calls functions in `analysis.py` for the numbers and
+   functions in `charts.py` for the figures, using the new `df`.
+6. The page in the browser updates.
+
+So a filter is not connected to each chart one by one. It changes `df`, and every chart is drawn
+from `df`.
+
+**One chart, start to finish** — "Heatwave days by region" style bar chart:
+
+```python
+heatwaves = df[df["Is_Heatwave"] == 1]                         # 1. keep the heatwave days
+by_region = heatwaves.groupby("Region").size()                 # 2. count them per region
+by_region = by_region.sort_values(ascending=False)             # 3. largest first
+chart_card("Heatwave days by region", ch.hbar, by_region, "Heatwave days")   # 4. draw
+```
+
+Inside step 4, `chart_card` calls `ch.hbar(by_region, "Heatwave days")`. That function creates a
+Matplotlib figure, draws one bar per region and returns the figure. `chart_card` then shows it
+with `st.pyplot(figure)`.
+
+---
+
+## 4. The dataset
 
 `files/heatwave_dataset_us.csv` — one row per city per day.
 
@@ -92,7 +308,7 @@ df["Is_Heatwave"] = (df["Heatwave_Flag"] == "Yes").astype(int)   # True/False ->
 
 ---
 
-## 3. Experiment 1 — Attribute types
+## 5. Experiment 1 — Attribute types
 
 **Idea.** Before analysing a column you must know what kind of values it holds, because that
 decides which operations make sense.
@@ -120,7 +336,7 @@ sense?" 20 °C is not twice as hot as 10 °C (0 °C is just where water freezes)
 - Mean and standard deviation need at least an interval scale. For a nominal column only the mode
   is meaningful.
 - The coefficient of variation (std ÷ mean) needs a ratio scale. That is why the CV for
-  temperatures in the dashboard should be read with care (see section 5).
+  temperatures in the dashboard should be read with care (see section 7).
 - Correlation and regression are only run on the numeric columns.
 
 **In the code.** `ATTRIBUTE_TYPES` in `analysis.py` is a list of tuples, one per column. The page
@@ -135,7 +351,7 @@ Result: 4 nominal, 2 ordinal, 8 interval, 5 ratio.
 
 ---
 
-## 4. Experiment 2 — Pandas and NumPy data handling
+## 6. Experiment 2 — Pandas and NumPy data handling
 
 **Idea.** Pandas holds the table (a **DataFrame**: labelled rows and columns). NumPy holds plain
 numeric arrays and does fast arithmetic on whole arrays at once.
@@ -214,7 +430,7 @@ dist = ((X[:, None, :] - centroids[None, :, :]) ** 2).sum(axis=2)
 
 ---
 
-## 5. Experiment 3 — Central tendency and variability
+## 7. Experiment 3 — Central tendency and variability
 
 **Idea.** Summarise a whole column with a few numbers: where its centre is, and how spread out it
 is. All formulas are in `analysis.py`.
@@ -330,7 +546,7 @@ ratio attributes (wind, precipitation, humidity, pressure).
 
 ---
 
-## 6. Experiment 4 — Correlation coefficient
+## 8. Experiment 4 — Correlation coefficient
 
 **Idea.** One number, $r$, that says how strongly two attributes move together **in a straight
 line**.
@@ -393,7 +609,7 @@ loop only computes the upper triangle and copies it.
 
 ---
 
-## 7. Experiment 5 — Predicting missing values with regression
+## 9. Experiment 5 — Predicting missing values with regression
 
 **Idea.** If an attribute is missing in some rows but is correlated with other attributes, fit a
 line through the rows where it *is* known, and use the line to predict the gaps.
@@ -516,7 +732,7 @@ reasonably strong, and the predictors themselves are not missing in those rows.
 
 ---
 
-## 8. Experiment 6 — Normalization and K-means discretization
+## 10. Experiment 6 — Normalization and K-means discretization
 
 ### Part A — Normalization
 
@@ -629,7 +845,7 @@ needed for the binning itself.
 
 ---
 
-## 9. Experiment 7 — The six Matplotlib plots
+## 11. Experiment 7 — The six Matplotlib plots
 
 **How every Matplotlib figure is built.** A **Figure** is the whole image; an **Axes** is one plot
 inside it. You create both, call plotting methods on the Axes, then label it.
@@ -644,8 +860,8 @@ fig.savefig("plot.png", dpi=180)                                   # save as an 
 
 | Plot | Command | Answers the question | In the dashboard |
 |---|---|---|---|
-| **Line** | `ax.plot(x, y)` | how does it change over an ordered axis? | monthly mean per region; heatwave days per month |
-| **Bar** | `ax.bar(x, h)` / `ax.barh(y, w)` | how do categories compare? | heatwave days per year / region / city |
+| **Line** | `ax.plot(x, y)` | how does it change over an ordered axis? | monthly mean temperature of each region |
+| **Bar** | `ax.bar(x, h)` / `ax.barh(y, w)` | how do categories compare? | heatwave days per year |
 | **Scatter** | `ax.scatter(x, y)` | how are two attributes related? | humidity vs solar radiation, heatwave days highlighted |
 | **Pie** | `ax.pie(values, labels=...)` | what share of the whole is each part? | share of heatwave days per region |
 | **Box** | `ax.boxplot(data)` | where is the middle, how wide is the spread, any outliers? | max temperature per region |
@@ -687,7 +903,7 @@ fig.savefig("plot.png", dpi=180)                                   # save as an 
 
 ---
 
-## 10. Experiment 8 — Visualization techniques
+## 12. Experiment 8 — Visualization techniques
 
 The lab names four families of techniques. The dashboard has at least one of each.
 
@@ -707,8 +923,8 @@ fig.colorbar(im, ax=ax)                      # the scale that explains the colou
 
 `pivot_table` reshapes the long table into a matrix; `imshow` draws a matrix as an image. The
 colour comes from a **colormap**, a function from a number in $[0, 1]$ to a colour. Magnitude uses
-a single-hue ramp (light → dark); the correlation matrix uses a **diverging** map (blue ↔ grey ↔
-red) because its values have a meaningful middle at 0.
+a single-hue ramp (light → dark); the correlation matrix uses a **diverging** map (teal ↔ grey ↔
+coral) because its values have a meaningful middle at 0.
 
 ### 2. Geometric projection
 
@@ -787,7 +1003,7 @@ labels (most Southwest Desert cities end up in one cluster) and where they do no
 
 ---
 
-## 11. How the dashboard itself works (Streamlit)
+## 13. How the dashboard itself works (Streamlit)
 
 **The Streamlit model.** `app.py` is an ordinary Python script. Streamlit runs it from top to
 bottom to draw the page, and **re-runs the whole script every time you touch a widget**. Widget
@@ -812,6 +1028,7 @@ values are remembered between runs in `st.session_state`.
 | `st.latex(r"...")` | a rendered formula |
 | `st.dataframe(df)` | an interactive, sortable table |
 | `st.pyplot(figure)` | show a Matplotlib figure |
+| `st.area_chart(table)`, `st.bar_chart(table)` | Streamlit's built-in live charts (hover, zoom) |
 | `st.code(source, language="python")` | syntax-highlighted code |
 | `st.columns(2)`, `st.container(border=True)` | layout: side-by-side columns, a bordered box |
 | `st.sidebar` | the left panel |
@@ -832,6 +1049,9 @@ values are remembered between runs in `st.session_state`.
 | `card(title, note)` | a bordered box for tables and text, used as `with card("Title"):` |
 | `chart_card(title, plot, *args)` | a bordered box with one chart and a Code switch |
 | `reading(text)` | the "Reading it" explanation under a chart |
+| `in_words(number)` | a number written out, e.g. 88 → "Eighty-Eight" |
+| `bars_html(series)` | gradient bars built from a Pandas Series |
+| `ranking_html(series)` | the city ranking: top three large, the rest as a list |
 
 Every chart on the site is one line. For example:
 
@@ -909,6 +1129,8 @@ The dashboard has a single theme: deep navy, with **teal, coral and purple** as 
   "Eighty-Eight", `bars_html(series)` draws the gradient bars and `ranking_html(series)` draws the
   city ranking. Each one just builds a string of HTML from a Pandas Series.
 - Panels and headings fade up when a page opens (`@keyframes rise`).
+- There is **no fullscreen button** on charts: `style.css` hides it, because a chart blown up to
+  full screen inside an animated panel did not display properly.
 
 ### Caching
 
@@ -925,7 +1147,318 @@ given a function (`lambda: ...`) rather than ready-made data.
 
 ---
 
-## 12. Command cheat sheets
+## 14. File-by-file walkthrough
+
+### `analysis.py` — the statistics
+
+The file starts with constants (plain data, no logic):
+
+| Name | What it holds |
+|---|---|
+| `NUMERIC_COLS` | the eight numeric weather columns that the statistics run on |
+| `LABELS`, `SHORT` | dictionaries: column name → readable label (long and short) |
+| `MONTHS`, `SEASONS`, `SEVERITY_ORDER` | fixed orders, so charts never sort alphabetically |
+| `ATTRIBUTE_TYPES` | the Experiment 1 classification table, one tuple per column |
+
+Then the functions, grouped by experiment:
+
+| Function | Takes | Gives back | Explained in |
+|---|---|---|---|
+| `find_data_file()` | – | the path of the CSV (looks beside the script, then in `files/`) | – |
+| `load_data()` | – | the DataFrame, with real dates and the `Is_Heatwave` column | 4 |
+| `mean`, `median`, `mode` | a column | one number | 7 |
+| `variance`, `std_dev` | a column | one number | 7 |
+| `quartiles`, `iqr` | a column | Q1 and Q3; their difference | 7 |
+| `value_range`, `coefficient_of_variation` | a column | one number | 7 |
+| `summary_table(df)` | the table | one row of statistics per numeric column | 7 |
+| `grouped_frequency(values, n_classes)` | a column, number of classes | the frequency table, the grouped statistics, the class edges | 7 |
+| `correlation_coefficient(x, y)` | two columns | r | 8 |
+| `correlation_matrix(df, cols)` | the table, column names | a square table of r values | 8 |
+| `describe_r(r)` | r | words, e.g. "moderate negative" | 8 |
+| `simple_linear_regression(x, y)` | predictor, target | `w0, w1` | 9 |
+| `multiple_linear_regression(X, y)` | predictor matrix, target | the coefficient array `b` | 9 |
+| `predict_multiple(b, X)` | coefficients, predictors | predicted values | 9 |
+| `regression_scores(actual, predicted)` | two arrays | MAE, RMSE, R² | 9 |
+| `imputation_experiment(...)` | table, target, predictors, % hidden | a dictionary with every result of the experiment | 9 |
+| `min_max_normalize`, `z_score_normalize` | a column | the rescaled column | 10 |
+| `decimal_scaling(values)` | a column | the rescaled column and `j` | 10 |
+| `kmeans(points, k)` | values, number of clusters | labels, centroids, WCSS, iterations | 10 |
+| `elbow_wcss(points, k_max)` | values | the WCSS for k = 1 … k_max | 10 |
+| `cluster_intervals(values, labels, k)` | values and their labels | a table: the range, centroid and size of each bin | 10 |
+| `key_insights(df)` | the table | a list of (title, sentence) pairs for the Overview | 1 |
+
+**`key_insights` in plain words.** It computes each headline from `df` and writes a sentence with
+an f-string, so the text always matches the current filters. For example the "increasing" insight
+counts heatwave days in the first and last year and reports the percentage change:
+$\text{change} = \dfrac{\text{last} - \text{first}}{\text{first}} \times 100 = \dfrac{701 - 363}{363} \times 100 = +93\%$.
+
+**The last block**, `if __name__ == "__main__":`, only runs when you type `python analysis.py`.
+It prints the main results in the terminal. When `app.py` imports the file, that block is skipped.
+
+### `charts.py` — the figures
+
+**The set-up at the top.**
+
+```python
+SURFACE = "#20243f"      # background of every chart (same as the panels on the page)
+TEAL = "#5eb6d1"
+CORAL = "#ee6f87"
+PURPLE = "#a47df2"
+REGION_COLORS = dict(zip(REGIONS, [CORAL, TEAL, PURPLE, PEACH, ORCHID, YELLOW, MINT]))
+```
+
+- Colours are written as **hex codes**: `#RRGGBB`, two digits each for red, green and blue.
+- `dict(zip(names, colours))` pairs the two lists into a dictionary, so each region always has
+  the same colour on every chart, whatever the filters are.
+- `LinearSegmentedColormap.from_list("heat", [...])` builds a **colormap**: a smooth ramp through
+  the listed colours, used wherever colour stands for a number (heat maps, the pixel map).
+- `font_manager.fontManager.addfont(...)` registers the Josefin Sans file so the charts use the
+  same typeface as the page.
+- `plt.rcParams.update({...})` sets Matplotlib's defaults once (background, text colour, grid,
+  font sizes, no top and right border), so the individual chart functions stay short.
+
+**The small helpers.**
+
+| Helper | What it does |
+|---|---|
+| `_fig(w, h)` | `plt.subplots(figsize=(w, h), layout="constrained")`: a figure and one axes of a given size in inches |
+| `_fade(ax, bars, color, direction)` | fills each bar with a gradient from the background to its colour, using `ax.imshow` |
+| `_message(text)` | an empty figure with a sentence, shown when there is nothing to plot |
+| `_text_on(color)` | black or white, whichever is readable on that fill (from the colour's brightness) |
+| `_wrap(label)` | breaks a long axis label onto two lines |
+| `_sample(df, n)` | a random sample of rows, so scatter plots draw 3,000 points instead of 102,256 |
+
+A leading underscore in a name is a Python convention for "used only inside this file".
+
+**Every chart function has the same shape.**
+
+```python
+def columns(values, ylabel, xlabel="", color=None, fmt="{:,.0f}", label_bars=True):
+    """Vertical bar plot."""
+    fig, ax = _fig()                                              # 1. make the figure
+    bars = ax.bar(values.index.astype(str), values.to_numpy(), width=0.55)   # 2. draw
+    if label_bars:
+        ax.bar_label(bars, labels=[fmt.format(v) for v in values], padding=3, color=INK, fontsize=10)
+    ax.set_ylabel(ylabel)                                         # 3. label
+    ax.set_xlabel(xlabel)
+    ax.grid(axis="x", visible=False)
+    ax.margins(y=0.14)
+    _fade(ax, bars, color or TEAL, "up")                          # 4. gradient fill
+    return fig                                                    # 5. hand the figure back
+```
+
+**What each chart function draws, and the Matplotlib call at its centre.**
+
+| Function | Draws | Key call | Used on |
+|---|---|---|---|
+| `hbar` | horizontal bars | `ax.barh` | Dataset |
+| `columns` | vertical bars | `ax.bar` | Dataset, Plot gallery |
+| `monthly_lines_by_region` | one line per region | `ax.plot` in a loop | Plot gallery |
+| `histogram` | histogram with optional marker lines | `ax.hist`, `ax.axvline` | Central tendency, Plot gallery |
+| `frequency_bars` | class-interval bars | `ax.bar` | Central tendency |
+| `box_by_group` | one box per group | `ax.boxplot` | Central tendency, Plot gallery |
+| `pie` | exploded donut | `ax.pie(..., wedgeprops=dict(width=...))` | Overview, Plot gallery |
+| `scatter_heatwave` | scatter, heatwave days highlighted | `ax.scatter` twice | Plot gallery |
+| `corr_heatmap` | the correlation matrix | `ax.imshow`, `ax.text` per cell | Correlation |
+| `corr_bars` | bars left and right of zero | `ax.barh`, `ax.axvline(0)` | Correlation |
+| `scatter_fit` | scatter with the regression line | `ax.scatter`, `ax.plot` | Regression |
+| `correlation_examples` | three scatters side by side | `plt.subplots(1, 3)` | Correlation |
+| `actual_vs_predicted` | two scatters with a diagonal | `plt.subplots(1, 2, sharex=True, sharey=True)` | Regression |
+| `error_bars` | one bar per method | `ax.bar` | Regression |
+| `normalization_histograms` | four small histograms | `plt.subplots(1, 4)` | Normalization |
+| `scale_comparison` | box plots before and after z-score | `ax.boxplot` twice | Normalization |
+| `elbow` | WCSS against k | `ax.plot(..., marker="o")` | Normalization |
+| `kmeans_bins` | histogram coloured by bin | `ax.hist(list_of_arrays, stacked=True)` | Normalization |
+| `pixel_map` | one pixel per record | `df.pivot_table`, `ax.imshow` | Visualization |
+| `month_region_heatmap` | region × month grid | `ax.imshow`, `ax.text` | Visualization |
+| `scatter_3d` | 3D scatter | `fig.add_subplot(projection="3d")` | Visualization |
+| `glyph_map` | one circle per city | `ax.scatter(lon, lat, s=size, c=value)` | Visualization |
+| `icon_array` | 100 dots per region | `ax.scatter` on a 10 × 10 grid | Visualization |
+| `treemap` | nested rectangles | `Rectangle` patches placed by `_split` | Visualization |
+| `city_dendrogram` | clustering tree | SciPy `linkage` + `dendrogram` | Visualization |
+
+**How the gradient bars work (`_fade`).** Matplotlib bars are one flat colour. To get a fade:
+
+1. Make a row of 256 numbers running from 0 to 1: `np.linspace(0, 1, 256)`.
+2. Build a two-colour colormap from the background colour to the bar's colour.
+3. Draw that row of numbers as an image exactly where the bar is, with
+   `ax.imshow(ramp, extent=[left, right, bottom, top])`.
+4. Hide the original bar (`bar.set_visible(False)`).
+
+`imshow` changes the axis limits as a side effect, so the function remembers them first and puts
+them back at the end.
+
+### `app.py` — the page
+
+The file is read top to bottom, in numbered blocks.
+
+**Before block 1: imports and page set-up.**
+
+```python
+st.set_page_config(page_title="Heatwave Intelligence", page_icon="🌡️", layout="wide")
+```
+
+This must be the first Streamlit command. `layout="wide"` uses the full browser width.
+
+**Block 1 — the look.**
+
+```python
+css = Path(__file__).with_name("style.css").read_text()
+st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+```
+
+- `Path(__file__)` is the location of `app.py`; `.with_name("style.css")` is the file beside it.
+- The CSS text is wrapped in a `<style>` tag and written into the page. `unsafe_allow_html=True`
+  tells Streamlit to treat the text as real HTML instead of printing it.
+
+**Block 2 — small helpers.** Most of them build a string of HTML and write it with `html(...)`.
+The important one is `chart_card`:
+
+```python
+@st.fragment
+def chart_card(title, plot, *args, note="", read="", maths=None, **kwargs):
+    name = card_name(title)                                        # 1
+    show_code = st.session_state.get("code-" + name, False)        # 2
+
+    with st.container(border=True, key=f"card-{name}{'--flip' if show_code else ''}"):   # 3
+        with st.container(horizontal=True, horizontal_alignment="distribute", key="head-" + name):
+            card_title(title, note)                                # 4
+            st.toggle("Code", key="code-" + name)
+
+        if show_code:                                              # 5
+            st.code(inspect.getsource(plot), language="python")
+        else:                                                      # 6
+            figure = plot(*args, **kwargs)
+            if figure is not None:
+                st.pyplot(figure)
+                plt.close(figure)
+            if read:
+                reading(read)
+```
+
+1. `card_name` turns "Overview" + "Heatwave Sources" into `overview-heatwave-sources`, a name
+   that is safe to use in CSS.
+2. Every widget with a `key` stores its value in `st.session_state`. This line reads whether this
+   card's Code switch is on (False the first time).
+3. The panel. Its `key` becomes a CSS class (`st-key-card-...`), which is how `style.css` finds
+   it. When the switch is on, `--flip` is added to the name and the flip animation plays.
+4. The header row: title and note on the left, the switch on the right.
+5. Switch on: show the source code of the chart function.
+6. Switch off: call the chart function. If it returned a Matplotlib figure, show it and then
+   close it to free memory. The live charts return nothing because they draw themselves.
+
+Also in block 2: the four cached functions (`load_data`, `summary_table`, `kmeans`, `elbow`),
+`to_excel`, and the three live-chart functions for the Overview.
+
+**Block 3 — the sidebar.** Navigation (`st.radio`), the three filters (`st.multiselect`), the
+filtering of `df`, and the two download buttons. If the filters leave fewer than 50 rows the
+script shows a warning and calls `st.stop()`, because statistics on a handful of rows are
+meaningless.
+
+**Blocks 4 to 11 — one per page**, chosen by `if page == "Overview": ... elif page == ...`. Each
+block follows the same pattern:
+
+```python
+elif page == "Correlation":
+    hero("Experiment 4", "Correlation", "...")                     # the page heading
+    matrix = an.correlation_matrix(df, columns)                    # compute with analysis.py
+    html(tiles_html([...]))                                        # headline numbers
+    chart_card("Correlation matrix", ch.corr_heatmap, matrix, ...) # charts from charts.py
+    with card("The formula"):                                      # a plain panel
+        st.latex(r"...")
+```
+
+| Block | Page | Calls in `analysis.py` | Charts |
+|---|---|---|---|
+| 4 | Overview | `key_insights` | three live charts, `pie` |
+| 5 | Dataset & attributes | `ATTRIBUTE_TYPES` | `columns`, `hbar` |
+| 6 | Central tendency | `summary_table`, `grouped_frequency` | `histogram`, `frequency_bars`, `box_by_group` |
+| 7 | Correlation | `correlation_matrix`, `describe_r` | `corr_heatmap`, `corr_bars`, `correlation_examples` |
+| 8 | Regression imputation | `imputation_experiment` | `scatter_fit`, `error_bars`, `actual_vs_predicted` |
+| 9 | Normalization & K-means | the three normalizations, `kmeans`, `elbow_wcss`, `cluster_intervals` | `scale_comparison`, `normalization_histograms`, `elbow`, `kmeans_bins` |
+| 10 | Plot gallery | – | the six basic plots |
+| 11 | Visualization techniques | `z_score_normalize` (inside the dendrogram) | `pixel_map`, `month_region_heatmap`, `scatter_3d`, `glyph_map`, `icon_array`, `treemap`, `city_dendrogram` |
+
+### `style.css` — the look
+
+CSS is a list of rules. Each rule is a **selector** (which elements) and **properties** (how they
+look):
+
+```css
+.card-title { font-size: 1.45rem; letter-spacing: .04em; color: var(--ink); }
+/* selector    property: value;                                              */
+```
+
+| CSS idea | Example from the file | What it does |
+|---|---|---|
+| Class selector | `.big-word` | every element written with `class="big-word"` |
+| Attribute selector | `[class*="st-key-card-"]` | every element whose class *contains* that text, i.e. every panel |
+| Variable | `--teal: #5eb6d1;` then `var(--teal)` | a colour defined once and reused |
+| Gradient | `linear-gradient(90deg, rgba(255,255,255,0.04), var(--c))` | a fade from nearly transparent to a colour (the bars) |
+| Flexbox | `display: flex; gap: 12px;` | puts children in a row (a bar and its value) |
+| Grid | `grid-template-columns: repeat(4, 1fr);` | four equal columns (the insight tiles) |
+| Transition | `transition: filter .2s ease;` | animates a change smoothly, e.g. on hover |
+| Hover | `.bar-row:hover .bar { filter: brightness(1.25); }` | a different look while the mouse is over it |
+| Keyframes | `@keyframes flip { from {...} to {...} }` | a named animation with a start and an end state |
+| Media query | `@media (max-width: 1100px) { ... }` | different rules on a narrow screen |
+| `!important` | `display: none !important;` | wins over Streamlit's own styling |
+
+**The flip in detail.**
+
+```css
+[class*="st-key-card-"][class*="--flip"] { animation: flip .6s cubic-bezier(.2, .8, .25, 1) backwards; }
+@keyframes flip {
+  from { transform: perspective(1800px) rotateY(-90deg); opacity: .1; }
+  to   { transform: perspective(1800px) rotateY(0deg);   opacity: 1; }
+}
+```
+
+The first rule matches a panel only when its name contains `--flip`. The animation starts with the
+panel turned edge-on (`rotateY(-90deg)`) and nearly invisible, and ends facing the viewer.
+`perspective` gives the turn depth, so it looks like a card flipping instead of squashing.
+
+### The other files
+
+| File | What is in it |
+|---|---|
+| `.streamlit/config.toml` | the theme: `base = "dark"`, the purple `primaryColor` used by switches and sliders, the panel colour as `backgroundColor` (so tables and live charts sit on the same colour as the panels), and the Google Fonts link for Josefin Sans |
+| `requirements.txt` | one line per library with an exact version (`streamlit==1.65.0`), so another computer or the hosting service installs the same thing |
+| `.gitignore` | what Git must not upload: the virtual environment `.venv/`, Python's cache folders, and the lab write-ups |
+| `README.md` | a short description of the project and how to run it |
+
+**Hosting.** Streamlit is a program that keeps running and talks to the browser continuously, so
+it needs a host that runs a server (Streamlit Community Cloud). A static host such as Vercel only
+serves files and short functions, which is why the project cannot be deployed there as it is.
+
+---
+
+## 15. Python, Weka and RapidMiner
+
+The Experiment 8 write-up lists Weka and RapidMiner as tools. This project uses Python instead.
+
+| | What it is | How you work in it |
+|---|---|---|
+| **Python + libraries** (this project) | a programming language | you write the code |
+| **Weka** | a free desktop application for data mining | you load a CSV and click through tabs: Preprocess, Classify, Cluster, Visualize |
+| **RapidMiner** (Altair AI Studio) | a desktop application | you drag boxes ("operators") onto a canvas and connect them into a pipeline |
+
+**The same task in each.**
+
+| Task | This project | Weka | RapidMiner |
+|---|---|---|---|
+| Normalize | `an.min_max_normalize(values)` | Preprocess → filter → `Normalize` | `Normalize` operator |
+| K-means | `an.kmeans(values, 4)` | Cluster → `SimpleKMeans` | `k-Means` operator |
+| Linear regression | `an.simple_linear_regression(x, y)` | Classify → `LinearRegression` | `Linear Regression` operator |
+| Scatter plot | `ax.scatter(x, y)` | Visualize tab | Results → Visualizations |
+
+**Why Python was the right choice here.** The experiments ask for the formulas "without built-in
+functions", which a click-based tool cannot show. In Python the algorithm itself is on screen (the
+Code switch), and the results can be explored live with filters. The click-based tools are faster
+for a first look at a dataset and need no programming.
+
+---
+
+## 16. Command cheat sheets
 
 ### Pandas
 
@@ -993,7 +1526,29 @@ fig.colorbar(im, ax=ax); fig.savefig("out.png", dpi=180); plt.show()
 
 ---
 
-## 13. Likely viva questions
+## 17. Presenting it: a five-minute demo
+
+A suggested order, with what to say at each step.
+
+| Step | Do this | Say this |
+|---|---|---|
+| 1 | Open the **Overview** | "Five years of daily weather for 56 US cities. A heatwave day is one where the maximum reaches 40 °C. Only 2.5% of city-days qualify." |
+| 2 | Hover over **Hot Days Per Month** | "Every summer has a spike, and the spikes are getting taller: 363 heatwave days in 2019, 701 in 2023." |
+| 3 | Point at **Heatwave Sources** and **Heatwaves by City** | "60% of them are in one region, the Southwest Desert, and 25 of the 56 cities never had one." |
+| 4 | Pick **Southwest Desert** in the Region filter, then clear it | "The filters apply to every page. They change one table, and every chart is drawn from that table." |
+| 5 | Open **Central tendency**, flip a card with **Code** | "The statistics are written from the formulas, not library functions. Here is the variance: the mean of the squared deviations." |
+| 6 | Show **Check: our functions against NumPy** | "And they match NumPy to four decimals." |
+| 7 | Open **Correlation** | "Temperature rises with sunshine, r = +0.66, and falls with humidity, r = −0.44." |
+| 8 | Open **Regression imputation** | "We hid 10% of the temperatures and predicted them. Multiple regression cuts the error by 32% compared with filling in the mean." |
+| 9 | Open **Normalization & K-means**, move the **k** slider | "K-means chooses the bin edges itself. The elbow suggests about four bins." |
+| 10 | Open **Visualization techniques** | "One example from each family in Experiment 8: pixel-oriented, geometric, icon-based and hierarchical." |
+
+**If something goes wrong.** If the hosted link is slow to wake up, run it locally with
+`streamlit run app.py`. If the page shows an error after a filter, clear the filters.
+
+---
+
+## 18. Likely viva questions
 
 **Why did you write the statistics yourself instead of using NumPy functions?**
 The experiments require it. Writing the formula shows we understand it; the dashboard also has a
@@ -1062,3 +1617,69 @@ answers questions in conversation, one at a time, in natural language.
 It helps at every stage: spotting outliers and skew before modelling, choosing attributes (the
 correlation matrix), checking a model (predicted-vs-actual plot), and explaining results to people
 who will not read a table.
+
+**How does a filter in the sidebar reach every chart?**
+It does not reach them one by one. The filter changes the table `df`, Streamlit re-runs the
+script, and every chart is drawn again from the new `df`.
+
+**What happens when you flip a card with the Code switch?**
+The switch stores True in Streamlit's session state. The card function then shows
+`inspect.getsource(plot)`, the text of the chart function, instead of calling it. The turning
+motion is a CSS animation.
+
+**Which charts are interactive, and how?**
+Three on the Overview use `st.area_chart` and `st.bar_chart`, which are built into Streamlit, so
+they show values on hover and can be zoomed. All other charts are Matplotlib figures.
+
+**Why are the heatwave days per region drawn with fixed colours?**
+So a region keeps the same colour on every chart and under every filter. Colour identifies the
+region; it must not depend on which rows happen to be selected.
+
+**Why sample 3,000 points for the scatter plots?**
+Drawing all 102,256 points would be slow and the dots would overlap into a solid block. A random
+sample shows the same pattern. The statistics (r, the regression line) still use every row.
+
+**Why did you choose Python instead of Weka or RapidMiner?**
+The experiments ask for the formulas without built-in functions, which a click-based tool cannot
+show. In Python the algorithm is visible, and a dashboard lets the results be explored live.
+
+---
+
+## 19. Glossary
+
+| Term | Meaning |
+|---|---|
+| **Attribute** | a column of the dataset |
+| **Record** | a row of the dataset (here: one city on one day) |
+| **DataFrame** | Pandas' table of rows and columns |
+| **Series** | one column of a DataFrame, or any labelled list of values |
+| **Array** | NumPy's list of numbers that supports arithmetic on all elements at once |
+| **Mask** | a column of True/False values used to pick rows |
+| **Vectorisation** | doing arithmetic on a whole array in one step instead of a loop |
+| **Broadcasting** | NumPy stretching a smaller shape to match a larger one in arithmetic |
+| **Central tendency** | where the middle of the data is: mean, median, mode |
+| **Variability / dispersion** | how spread out the data is: range, variance, standard deviation, IQR |
+| **Skew** | a distribution with a longer tail on one side |
+| **Quartile** | one of the three values that cut sorted data into four equal parts |
+| **Outlier** | a value far from the rest, beyond 1.5 × IQR from the box in a box plot |
+| **Correlation** | how strongly two attributes move together in a straight line |
+| **Regression** | fitting an equation that predicts one attribute from others |
+| **Least squares** | choosing the line that makes the sum of squared errors smallest |
+| **Coefficient** | a number multiplying a predictor in a regression equation |
+| **Intercept** | the predicted value when every predictor is zero |
+| **Residual / error** | actual value minus predicted value |
+| **Imputation** | filling in missing values |
+| **Normalization** | rescaling attributes to a common range |
+| **Discretization** | replacing continuous values with a small number of bins |
+| **Cluster** | a group of similar data points |
+| **Centroid** | the mean of the points in a cluster |
+| **WCSS** | within-cluster sum of squares: what K-means minimises |
+| **Unsupervised** | a method that uses no labels (K-means, hierarchical clustering) |
+| **Colormap** | a function from a number to a colour |
+| **Figure / Axes** | Matplotlib's whole image / one plot inside it |
+| **Widget** | an input on the page: a filter, slider, switch or button |
+| **Re-run** | Streamlit executing the script again after a widget changes |
+| **Cache** | a stored result that is reused instead of being recomputed |
+| **Session state** | values Streamlit remembers between re-runs |
+| **CSS** | the language that describes how a web page looks |
+| **Repository** | a project folder tracked by Git (and stored on GitHub) |

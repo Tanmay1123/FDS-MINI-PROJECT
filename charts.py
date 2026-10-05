@@ -167,48 +167,6 @@ def columns(values, ylabel, xlabel="", color=None, fmt="{:,.0f}", label_bars=Tru
     return fig
 
 
-def severity_area(df):
-    """Stacked area plot: Warm, Hot and Severe days per month (the main chart of the overview)."""
-    monthly = (df[df["Heat_Severity_Class"] != "Normal"]
-               .groupby([pd.Grouper(key="Date", freq="MS"), "Heat_Severity_Class"]).size().unstack(fill_value=0))
-    all_months = pd.date_range(df["Date"].min().replace(day=1), df["Date"].max(), freq="MS")
-    monthly = monthly.reindex(index=all_months, columns=["Severe", "Hot", "Warm"], fill_value=0)
-
-    fig, ax = _fig(7.6, 3.7)
-    ax.stackplot(monthly.index, monthly["Severe"], monthly["Hot"], monthly["Warm"],
-                 colors=[PURPLE, CORAL, TEAL], alpha=0.92, linewidth=0, labels=["Severe", "Hot", "Warm"])
-    total = monthly.sum(axis=1)
-    if total.max() > 0:
-        peak = total.idxmax()
-        ax.scatter([peak], [total.max()], s=70, facecolor=INK, edgecolor=SURFACE, linewidth=2, zorder=4)
-        ax.annotate(f"{total.max():,.0f}\ndays at 35 °C+ in {peak:%b %Y}", (peak, total.max()),
-                    xytext=(-70, -34), textcoords="offset points", ha="right", va="center", fontsize=10.5,
-                    color=INK, arrowprops=dict(arrowstyle="-", color=INK2, linewidth=0.8))
-    ax.set_ylim(bottom=0)
-    ax.set_ylabel("City-days per month")
-    ax.grid(axis="x", visible=False)
-    ax.legend(loc="upper left", ncols=3, handlelength=1, handleheight=1, columnspacing=1.6)
-    return fig
-
-
-def heatwave_timeline(df):
-    """Line plot: heatwave days per month across the whole period."""
-    monthly = df.groupby(pd.Grouper(key="Date", freq="MS"))["Is_Heatwave"].sum()
-    fig, ax = _fig(9, 3)
-    ax.plot(monthly.index, monthly.to_numpy(), color=CORAL)
-    ax.fill_between(monthly.index, monthly.to_numpy(), color=CORAL, alpha=0.10, linewidth=0)
-    if monthly.max() > 0:
-        peak = monthly.idxmax()
-        ax.scatter([peak], [monthly.max()], s=36, color=CORAL, edgecolor=SURFACE, linewidth=1.5, zorder=3)
-        ax.annotate(f"{peak:%b %Y}: {monthly.max():,.0f}", (peak, monthly.max()),
-                    xytext=(-8, 0), textcoords="offset points", ha="right", va="center",
-                    color=INK2, fontsize=9.5)
-    ax.set_ylabel("Heatwave days per month")
-    ax.set_ylim(bottom=0)
-    ax.grid(axis="x", visible=False)
-    return fig
-
-
 def monthly_lines_by_region(df, column):
     """Line plot: monthly mean of a column, one line per region."""
     table = df.groupby(["Month", "Region"])[column].mean().unstack()
@@ -220,26 +178,6 @@ def monthly_lines_by_region(df, column):
     ax.set_ylabel(an.LABELS[column])
     ax.grid(axis="x", visible=False)
     ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handlelength=1.2)
-    return fig
-
-
-def severity_stack(df):
-    """Stacked bar: share of Warm / Hot / Severe days in each region."""
-    share = (pd.crosstab(df["Region"], df["Heat_Severity_Class"], normalize="index") * 100)
-    share = share.reindex(columns=an.SEVERITY_ORDER, fill_value=0)
-    share = share.loc[share[["Warm", "Hot", "Severe"]].sum(axis=1).sort_values().index]
-    fig, ax = _fig(5.2, max(2.0, 0.3 * len(share) + 1.1))
-    left = np.zeros(len(share))
-    for level in ["Warm", "Hot", "Severe"]:
-        ax.barh(share.index, share[level], left=left, height=0.6, color=SEVERITY_COLORS[level],
-                edgecolor=SURFACE, linewidth=1.5, label=level)
-        left += share[level].to_numpy()
-    for y, total in enumerate(left):
-        ax.text(total + 0.4, y, f"{total:.1f}%", va="center", color=INK2, fontsize=9.5)
-    ax.set_xlabel("Share of days at 35 °C or above (%)")
-    ax.grid(axis="y", visible=False)
-    ax.margins(x=0.12)
-    ax.legend(loc="lower right", ncols=3, handlelength=1, columnspacing=1.2)
     return fig
 
 
