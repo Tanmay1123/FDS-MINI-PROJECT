@@ -38,6 +38,7 @@ python analysis.py
 | Central tendency & variability | 3 | Mean, median, mode, variance, std dev, IQR, grouped frequency distribution |
 | Correlation | 4 | Pearson r from the formula, correlation matrix, scatter plots |
 | Regression imputation | 5 | Simple (least squares) and multiple (normal equations) regression to predict hidden values |
+| Regression simulator | 5 | Pick any attribute: correlation with every other attribute, recommended predictors, and a live prediction |
 | Normalization & discretization | 6 | Min-max, z-score, decimal scaling; K-means binning with the elbow method |
 | Plot gallery | 7 | Line, bar, scatter, pie, box and histogram plots |
 | Visualization techniques | 8 | Pixel-oriented, geometric projection (3D), icon-based, hierarchical (tree map, dendrogram) |

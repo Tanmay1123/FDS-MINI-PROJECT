@@ -49,8 +49,9 @@ you. Sections 13 and 14 explain the code file by file. Sections 17 and 18 are fo
 **Goal.** Take a weather dataset and use the FDS lab techniques to answer: *where, when and under
 what conditions do heatwaves happen?*
 
-**What it is.** A web dashboard with eight pages: an Overview, then one page for each lab
-experiment (Experiments 1 and 2 share a page). It runs in the browser but is written entirely in
+**What it is.** A web dashboard with nine pages: an Overview, one page for each lab experiment
+(Experiments 1 and 2 share a page), and a Regression simulator for trying Experiment 5 on any
+attribute. It runs in the browser but is written entirely in
 Python.
 
 **The files.**
@@ -726,6 +727,56 @@ With actual values $y_i$ and predictions $\hat{y}_i$ over the $m$ hidden rows:
 ($R^2 \approx 0.84$ from min temperature alone). The dashboard uses non-temperature
 predictors so the two methods can actually be compared.
 
+### Choosing the predictors: the Regression simulator page
+
+The **Regression simulator** page lets you pick any attribute as the target and answers "which
+attributes should I use to predict it?". The rule is in `recommend_predictors` in `analysis.py`:
+
+1. Compute r between every other attribute and the target, and sort from strongest to weakest.
+2. **Rule 1 — it must be related to the target:** skip the attribute if $\lvert r\rvert < 0.2$.
+3. **Rule 2 — it must not repeat a predictor already chosen:** skip it if its correlation with
+   any chosen predictor is $\lvert r\rvert \ge 0.85$.
+
+Rule 2 avoids **multicollinearity**: two predictors that carry almost the same information. The
+model cannot tell which of them deserves the credit, so the coefficients become unstable and hard
+to interpret, and the second one adds almost no accuracy.
+
+**Example: solar radiation is missing.**
+
+| Attribute | r with solar radiation | Decision |
+|---|---|---|
+| Max temperature | +0.66 | Use |
+| Mean temperature | +0.61 | Skip: repeats max temperature (r = 0.98 between them) |
+| Relative humidity | −0.53 | Use |
+| Min temperature | +0.51 | Skip: repeats max temperature (r = 0.92) |
+| Precipitation | −0.29 | Use |
+| Longitude, latitude, pressure, wind | −0.20 to −0.08 | Skip: too weak |
+
+With the three chosen predictors (10% of values hidden):
+
+$$\text{Solar radiation} = 14.26 + 0.399\,\text{Max temp} - 0.081\,\text{Humidity} - 0.259\,\text{Precipitation}$$
+
+| Method | RMSE (MJ/m²/day) | R² |
+|---|---|---|
+| Mean imputation | 7.74 | 0.000 |
+| Simple regression (max temperature only) | 5.81 | 0.437 |
+| Multiple regression (3 predictors) | 5.25 | 0.540 |
+
+So the model explains about 54% of the variation: a moderate fit, clearly better than the mean.
+A sunny day is hot, dry and rainless, which is exactly what the signs of the coefficients say.
+
+**To fill in one missing value**, put that record's known values into the equation. A day with
+max temperature 21.67 °C, humidity 63.49% and precipitation 2.06 mm (the averages) gives
+$14.26 + 0.399(21.67) - 0.081(63.49) - 0.259(2.06) \approx 17.2$ MJ/m²/day. Step 3 of the page does
+this calculation live.
+
+**When no attribute passes the rules** (wind speed is an example: every $\lvert r\rvert$ is below
+0.2), regression has nothing to work with and would not beat filling in the mean.
+
+**A limit of the rule.** It only sees straight-line relationships. Solar radiation depends
+strongly on the time of year, but it rises to June and falls again, so the month number has
+almost no linear correlation with it and the rule ignores it.
+
 **When is regression imputation appropriate?** When the attribute with gaps is numeric, the
 relationship with the predictors is roughly linear (check the scatter plot), the correlation is
 reasonably strong, and the predictors themselves are not missing in those rows.
@@ -1180,6 +1231,7 @@ Then the functions, grouped by experiment:
 | `predict_multiple(b, X)` | coefficients, predictors | predicted values | 9 |
 | `regression_scores(actual, predicted)` | two arrays | MAE, RMSE, R² | 9 |
 | `imputation_experiment(...)` | table, target, predictors, % hidden | a dictionary with every result of the experiment | 9 |
+| `recommend_predictors(df, target, candidates)` | table, target, candidate columns | a table of r values with a Use / Skip decision, and the list of chosen predictors | 9 |
 | `min_max_normalize`, `z_score_normalize` | a column | the rescaled column | 10 |
 | `decimal_scaling(values)` | a column | the rescaled column and `j` | 10 |
 | `kmeans(points, k)` | values, number of clusters | labels, centroids, WCSS, iterations | 10 |
@@ -1375,6 +1427,7 @@ elif page == "Correlation":
 | 6 | Central tendency | `summary_table`, `grouped_frequency` | `histogram`, `frequency_bars`, `box_by_group` |
 | 7 | Correlation | `correlation_matrix`, `describe_r` | `corr_heatmap`, `corr_bars`, `correlation_examples` |
 | 8 | Regression imputation | `imputation_experiment` | `scatter_fit`, `error_bars`, `actual_vs_predicted` |
+| 8b | Regression simulator | `recommend_predictors`, `imputation_experiment` | `corr_bars`, `actual_vs_predicted` |
 | 9 | Normalization & K-means | the three normalizations, `kmeans`, `elbow_wcss`, `cluster_intervals` | `scale_comparison`, `normalization_histograms`, `elbow`, `kmeans_bins` |
 | 10 | Plot gallery | – | the six basic plots |
 | 11 | Visualization techniques | `z_score_normalize` (inside the dendrogram) | `pixel_map`, `month_region_heatmap`, `scatter_3d`, `glyph_map`, `icon_array`, `treemap`, `city_dendrogram` |

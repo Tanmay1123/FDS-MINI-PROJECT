@@ -214,7 +214,8 @@ def live_region_share(df):
 data = load_data()
 
 PAGES = ["Overview", "Dataset & attributes", "Central tendency", "Correlation",
-         "Regression imputation", "Normalization & K-means", "Plot gallery", "Visualization techniques"]
+         "Regression imputation", "Regression simulator", "Normalization & K-means",
+         "Plot gallery", "Visualization techniques"]
 
 with st.sidebar:
     html('<div class="brand-name">Heatwave<br>Intelligence</div>'
@@ -547,6 +548,82 @@ elif page == "Regression imputation":
         gain = (1 - scores.loc[best, "RMSE"] / scores.loc["Mean imputation", "RMSE"]) * 100
         reading(f"{best.lower()} is the most accurate. Its error is {gain:.0f}% lower than filling "
                 f"every gap with the mean.")
+
+
+# ================================================================ 8b. REGRESSION SIMULATOR
+
+elif page == "Regression simulator":
+    hero("Experiment 5 · try it yourself", "Regression simulator",
+         "Pick any attribute. The page measures how strongly every other attribute is related to it, "
+         "recommends which ones to use as predictors, and then predicts hidden values with them.")
+
+    # ---- step 1: pick the attribute to predict
+    target = st.selectbox("Attribute to predict (the one with missing values)", an.NUMERIC_COLS,
+                          index=an.NUMERIC_COLS.index("Solar_Radiation_MJm2day"), format_func=an.LABELS.get)
+    candidates = [c for c in an.NUMERIC_COLS + ["Latitude", "Longitude"] if c != target]
+
+    # ---- step 2: correlation of every other attribute with it, and the recommendation
+    table, recommended = an.recommend_predictors(df, target, candidates)
+    r_values = pd.Series({c: an.correlation_coefficient(df[c], df[target]) for c in candidates})
+
+    target_label = an.LABELS[target][0].lower() + an.LABELS[target][1:]      # "solar radiation (MJ/m²/day)"
+
+    section("Step 1 · Which attributes are related to it?")
+    left, right = st.columns([2, 3])
+    with left:
+        chart_card("Correlation with the target", ch.corr_bars, r_values, an.SHORT[target].lower(),
+                   maths=an.correlation_coefficient)
+    with right:
+        with card("Recommendation", "Use a predictor if |r| ≥ 0.2 and it does not repeat one already chosen (|r| between them below 0.85)."):
+            st.dataframe(table.round(3), hide_index=True)
+            if recommended:
+                reading("use " + ", ".join(an.SHORT[c].lower() for c in recommended) + ".")
+            else:
+                reading("no attribute is related strongly enough, so regression would not beat the mean here.")
+
+    # ---- step 3: run the regression with the chosen predictors
+    section("Step 2 · Predict with the chosen attributes")
+    chosen = st.multiselect("Predictors to use (starts with the recommended ones; change them to compare)",
+                            candidates, default=recommended, format_func=an.LABELS.get, key="predictors-" + target)
+    if not chosen:
+        st.info("Pick at least one predictor.")
+        st.stop()
+
+    strongest = max(chosen, key=lambda c: abs(r_values[c]))
+    result = an.imputation_experiment(df, target, strongest, chosen, missing_pct=10)
+    scores = result["scores"]
+    b = result["multi"]["b"]
+
+    html(tiles_html([
+        ("Values hidden", f"{result['n_missing']:,}", "10% of the records"),
+        ("Mean imputation", f"{scores.loc['Mean imputation', 'RMSE']:.2f}", "error (RMSE)"),
+        ("Simple regression", f"{scores.loc['Simple linear regression', 'RMSE']:.2f}", f"error, using {an.SHORT[strongest].lower()} only"),
+        ("Multiple regression", f"{scores.loc['Multiple linear regression', 'RMSE']:.2f}", f"error, using {len(chosen)} predictor(s)"),
+        ("R² of multiple", f"{scores.loc['Multiple linear regression', 'R²']:.3f}", "share of variation explained"),
+    ]))
+
+    left, right = st.columns([2, 3])
+    with left:
+        with card("The equation", "b = (XᵀX)⁻¹ XᵀY on the values that were not hidden."):
+            coefficients = pd.DataFrame({"Term": ["Intercept (b₀)"] + [an.LABELS[c] for c in chosen], "Coefficient": b})
+            st.dataframe(coefficients.round(4), hide_index=True)
+            terms = " ".join(f"{'+' if v >= 0 else '−'} {abs(v):.3f}·{an.SHORT[c]}" for c, v in zip(chosen, b[1:]))
+            st.write(f"**{an.SHORT[target]} = {b[0]:.3f} {terms}**")
+    with right:
+        chart_card("Predicted vs actual", ch.actual_vs_predicted, result, target_label,
+                   note="Left: the strongest predictor alone. Right: all the chosen predictors together.",
+                   maths=an.multiple_linear_regression)
+
+    # ---- step 4: predict one missing value by hand
+    section("Step 3 · Fill in one missing value")
+    with card("Enter the known values of a record", "The equation above gives the missing value. The boxes start at each attribute's average."):
+        columns = st.columns(len(chosen))
+        prediction = b[0]
+        for box, c, coefficient in zip(columns, chosen, b[1:]):
+            value = box.number_input(an.LABELS[c], value=round(float(an.mean(df[c])), 2), key=f"input-{target}-{c}")
+            prediction += coefficient * value
+        html(f'<div class="big-word">{prediction:.2f}</div>'
+             f'<div class="big-text">Predicted {target_label}</div>')
 
 
 # ================================================================ 9. EXPERIMENT 6

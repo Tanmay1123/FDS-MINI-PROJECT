@@ -366,6 +366,35 @@ def imputation_experiment(df, target, simple_predictor, multi_predictors,
     }
 
 
+def recommend_predictors(df, target, candidates, min_r=0.2, max_overlap=0.85):
+    """
+    Decide which attributes to use for predicting `target` with multiple regression.
+
+    Rule 1: a predictor must be related to the target        -> |r| with the target >= min_r
+    Rule 2: it must not repeat a predictor already chosen     -> |r| with that one  <  max_overlap
+    The candidates are looked at from the strongest to the weakest.
+    """
+    r_with_target = {c: correlation_coefficient(df[c], df[target]) for c in candidates}
+    strongest_first = sorted(candidates, key=lambda c: abs(r_with_target[c]), reverse=True)
+
+    chosen, rows = [], []
+    for c in strongest_first:
+        r = r_with_target[c]
+        decision = "Use"
+        if abs(r) < min_r:
+            decision = "Skip: too weak"
+        else:
+            for other in chosen:
+                if abs(correlation_coefficient(df[c], df[other])) >= max_overlap:
+                    decision = f"Skip: repeats {SHORT[other]}"
+                    break
+        if decision == "Use":
+            chosen.append(c)
+        rows.append({"Attribute": LABELS[c], "r with target": r, "Strength": describe_r(r), "Decision": decision})
+
+    return pd.DataFrame(rows), chosen
+
+
 # ---------------------------------------------------------------- Exp 6: normalization
 
 def min_max_normalize(values, new_min=0.0, new_max=1.0):
